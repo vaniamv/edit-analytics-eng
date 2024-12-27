@@ -1,0 +1,45 @@
+version: 2
+
+models:
+  - name: reporting_customer_segm
+    description: >
+      This model calculates customer responsiveness and segments customers based on demographic and income data.
+      It aggregates data to identify trends in responsiveness (avg_response_rate) by gender, age group,
+      and income bracket.
+    columns:
+      - name: gender
+        description: The gender of the customer (e.g., Male, Female, etc.).
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['Male', 'Female', 'Unknown']
+      - name: age_group
+        description: >
+          Categorized age group of the customer. Derived from the age column in dim_customer
+          (e.g., '18-24', '25-34', etc.).
+        tests:
+          - not_null
+
+      - name: income_bracket
+        description: >
+          Categorized income bracket of the customer. Derived from the income column in dim_customer
+          (e.g., 'Low', 'Medium', 'High').
+        tests:
+          - not_null
+
+      - name: avg_response_rate
+        description: >
+          Average response rate, calculated as the ratio of completed transactions to received
+          transactions, grouped by demographic segments. Represents the likelihood of a customer
+          responding to promotional offers.
+        tests:
+          - not_null
+          - relationships:
+              to: ref('fct_customer_transactions')
+              field: customer_id
+
+      - name: customer_count
+        description: >
+          Count of distinct customers in each demographic segment. Indicates the size of the segment.
+        tests:
+          - not_null
