@@ -4,6 +4,8 @@
     )
 }}
 
+{% set extraction_date = "'2018-07-26'::date"
+%}
 with
     customer_responsiveness as (
         select
@@ -18,27 +20,17 @@ with
 
 select
     c.gender,
-    case
-        when c.age between 18 AND 24 then '18-24'
-        when c.age between 25 AND 34 then '25-34'
-        when c.age between 35 AND 44 then '35-44'
-        when c.age between 45 AND 54 then '45-54'
-        when c.age >= 55 then '55+'
-        else 'Unknown'
-    end as age_group,
-    case
-        when c.income < 20000 then 'Low'
-        when c.income between 20000 AND 50000 then 'Medium'
-        when c.income > 50000 then 'High'
-        else 'Unknown'
-    end as income_bracket,
+    {{ age_buckets('c.age') }} as age_group,
+    {{ income_buckets('c.income') }} as income_bracket,
     avg(case when cr.received_count = 0 then 0 else cr.completed_count * 1.0 / cr.received_count end) as avg_response_rate,
-    count(distinct cr.customer_id) as customer_count
+    count(distinct cr.customer_id) as customer_count,
+    {{ cust_loyalty_buckets('c.subscribed_date', extraction_date) }} as customer_category
 from customer_responsiveness cr
 join {{ ref('dim_customer') }} c
     on cr.customer_id = c.customer_id
 group by
     c.gender,
     age_group,
-    income_bracket
+    income_bracket,
+    customer_category
 order by avg_response_rate desc

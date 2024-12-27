@@ -13,3 +13,41 @@ macros:
       - name: transactions
         description: transactions.
         type: text
+  - name: age_buckets
+    description: |
+      This macro categorizes an age value into predefined age groups:
+      '18-24', '25-34', '35-44', '45-54', '55+', or 'Unknown'.
+    arguments:
+      - name: age
+        description: |
+          The column or value representing the age to be bucketed.
+          Should be numeric.
+  - name: income_buckets
+    description: |
+      A macro to classify income levels into predefined buckets: Low, Medium, High, and Unknown.
+    arguments:
+      - name: income
+        description: |
+          The numeric field representing income to be classified.
+        type: numeric
+    tests:
+      - name: income_buckets_low
+        description: Test for incomes classified as 'Low'
+        code: |
+          select
+              {{ income_buckets('15000') }} as income_bracket -- Expected 'Low'
+      - name: income_buckets_medium
+        description: Test for incomes classified as 'Medium'
+        code: |
+          select
+              {{ income_buckets('30000') }} as income_bracket -- Expected 'Medium'
+      - name: income_buckets_high
+        description: Test for incomes classified as 'High'
+        code: |
+          select
+              {{ income_buckets('60000') }} as income_bracket -- Expected 'High'
+      - name: income_buckets_unknown
+        description: Test for unknown incomes
+        code: |
+          select
+              {{ income_buckets('NULL') }} as income_bracket -- Expected 'Unknown'
