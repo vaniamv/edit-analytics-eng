@@ -2,44 +2,62 @@ version: 2
 
 models:
   - name: reporting_customer_segm
-    description: >
-      This model calculates customer responsiveness and segments customers based on demographic and income data.
-      It aggregates data to identify trends in responsiveness (avg_response_rate) by gender, age group,
-      and income bracket.
+    description: |
+      This model calculates customer responsiveness by segmenting customers into responsiveness buckets
+      based on their transaction activity and offer participation.
     columns:
+      - name: customer_id
+        description: Unique identifier for each customer.
+        tests:
+          - not_null
+          - unique
       - name: gender
-        description: The gender of the customer (e.g., Male, Female, etc.).
+        description: The gender of the customer (e.g., Male, Female, Other).
+        tests:
+          - accepted_values:
+              values: ['M', 'F', 'O']
+      - name: age_group
+        description: The age group bucket for the customer, as determined by the age_buckets macro.
+        tests:
+          - not_null
+      - name: customer_loyalty
+        description: |
+          The customer loyalty category based on their subscription date,
+          calculated using the cust_loyalty_buckets macro.
+        tests:
+          - not_null
+      - name: response_rate
+        description: |
+          The calculated response rate for each customer,
+          based on their completed transactions and offer participation.
+        tests:
+          - not_null
+
+      - name: responsiveness_bucket
+        description: |
+          Categorizes customers into buckets ('Highly Responsive', 'Moderately Responsive', 'Lowly Responsive')
+          based on their response_rate.
+        tests:
+          - accepted_values:
+              values: ['Highly Responsive', 'Moderately Responsive', 'Lowly Responsive']
+  - name: avg_response_rate_per_channel
+    description: |
+      This model calculates the average response rate per offer channel,
+      grouped by the channel type and ordered by the highest average response rate.
+    columns:
+      - name: offer_channel
+        description: |
+          The type of channel through which the offer was communicated (e.g., Email, SMS, Web).
         tests:
           - not_null
           - accepted_values:
-              values: ['Male', 'Female', 'Unknown']
-      - name: age_group
-        description: >
-          Categorized age group of the customer. Derived from the age column in dim_customer
-          (e.g., '18-24', '25-34', etc.).
-        tests:
-          - not_null
+              values: ['Email', 'SMS', 'Web', 'In-Person', null]
 
-      - name: income_bracket
-        description: >
-          Categorized income bracket of the customer. Derived from the income column in dim_customer
-          (e.g., 'Low', 'Medium', 'High').
-        tests:
-          - not_null
-
-      - name: avg_response_rate
-        description: >
-          Average response rate, calculated as the ratio of completed transactions to received
-          transactions, grouped by demographic segments. Represents the likelihood of a customer
-          responding to promotional offers.
+      - name: avg_response_rate_per_channel
+        description: |
+          The average response rate for offers in each channel, rounded to two decimal places.
         tests:
           - not_null
           - relationships:
-              to: ref('fct_customer_transactions')
-              field: customer_id
-
-      - name: customer_count
-        description: >
-          Count of distinct customers in each demographic segment. Indicates the size of the segment.
-        tests:
-          - not_null
+              to: fct_offer_transactions.offer_channel
+              field: offer_channel

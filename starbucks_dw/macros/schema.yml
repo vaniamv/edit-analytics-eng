@@ -7,21 +7,14 @@ macros:
       - name: hours
         description: Number of hours.
         type: integer
+
   - name: format_transaction_type
     description: Case of transactions.
     arguments:
       - name: transactions
         description: transactions.
         type: text
-  - name: age_buckets
-    description: |
-      This macro categorizes an age value into predefined age groups:
-      '18-24', '25-34', '35-44', '45-54', '55+', or 'Unknown'.
-    arguments:
-      - name: age
-        description: |
-          The column or value representing the age to be bucketed.
-          Should be numeric.
+
   - name: income_buckets
     description: |
       A macro to classify income levels into predefined buckets: Low, Medium, High, and Unknown.
@@ -51,3 +44,64 @@ macros:
         code: |
           select
               {{ income_buckets('NULL') }} as income_bracket -- Expected 'Unknown'
+
+  - name: age_buckets
+    description: |
+      A macro that categorizes individuals into age buckets based on their age.
+      The categories are:
+        - 'Young Adult' (18–34 years)
+        - 'Adult' (35–44 years)
+        - 'Senior Adult' (45–59 years)
+        - 'Elder' (60+ years)
+        - 'Unknown' (age is null or does not fall within the specified ranges).
+    arguments:
+      - name: age
+        description: |
+          The column or value representing an individual's age.
+          This must be an integer or numeric field.
+    tests:
+      - dbt_utils.expression_is_true:
+          expression: "{{ age_buckets('30') }} = 'Young Adult'"
+      - dbt_utils.expression_is_true:
+          expression: "{{ age_buckets('40') }} = 'Adult'"
+      - dbt_utils.expression_is_true:
+          expression: "{{ age_buckets('50') }} = 'Senior Adult'"
+      - dbt_utils.expression_is_true:
+          expression: "{{ age_buckets('65') }} = 'Elder'"
+      - dbt_utils.expression_is_true:
+          expression: "{{ age_buckets('null') }} = 'Unknown'"
+
+  - name: cust_loyalty_buckets
+    description: |
+      A macro to categorize customers based on their subscription date in relation to an extraction date.
+      It classifies customers into three categories:
+        - 'New Customer': Subscribed within the last 30 days.
+        - 'Recent Customer': Subscribed within the last 2 years but not in the last 30 days.
+        - 'Loyal Customer': Subscribed more than 2 years ago.
+    arguments:
+      - name: subscribed_date
+        description: |
+          The date when the customer subscribed to the service.
+          This should be a date column or value representing the customer's subscription date.
+      - name: extraction_date
+        description: |
+          The date used to evaluate the customer’s subscription status.
+          This should be a date or datetime value used to compare against `subscribed_date`.
+
+  - name: calculate_response_rate
+    description: |
+      A macro to calculate the response rate for transactions. It determines the ratio of offers completed
+      (based on a specified transaction status) to the total number of unique offers and rounds the result to two decimal places.
+    arguments:
+      - name: transaction_status
+        description: |
+          The column that stores the transaction status (e.g., 'completed', 'pending').
+          Used to filter transactions by the specified status.
+      - name: offer_id
+        description: |
+          The column containing unique identifiers for offers.
+          Used to calculate distinct counts for the numerator and denominator.
+      - name: status
+        description: |
+          The transaction status to filter on (default is 'completed').
+          This value is compared against the `transaction_status`.

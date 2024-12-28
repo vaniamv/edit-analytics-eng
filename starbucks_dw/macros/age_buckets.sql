@@ -1,10 +1,9 @@
 {% macro age_buckets(age) %}
     case
-        when {{ age }} between 18 AND 24 then '18-24'
-        when {{ age }} between 25 AND 34 then '25-34'
-        when {{ age }} between 35 AND 44 then '35-44'
-        when {{ age }} between 45 AND 54 then '45-54'
-        when {{ age }} >= 55 then '55+'
+        when {{ age }} between 18 AND 34 then 'Young Adult'
+        when {{ age }} between 35 AND 44 then 'Adult'
+        when {{ age }} between 45 AND 59 then 'Senior Adult'
+        when {{ age }} >= 60 then 'Elder'
         else 'Unknown'
     end
 {% endmacro %}
